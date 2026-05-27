@@ -12,7 +12,7 @@
   },
   "publisher": "hekkelmr",
   "repository": {
-    "url": "https://github.com/hekkelmr/vscode-ibmi-srcpfextension"
+    "url": "https://github.com/hekkelmr/ibmi-srcpfextension"
   },
   "categories": [
     "Other"

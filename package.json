@@ -1,0 +1,78 @@
+{
+  "name": "ibmi-srcpfextension",
+  "displayName": "ibmi-srcpfextension",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.120.0"
+  },
+   "author": {
+    "name": "Rob Hekkelman",
+    "url": "https://github.com/hekkelmr/"
+  },
+  "publisher": "hekkelmr",
+  "repository": {
+    "url": "https://github.com/hekkelmr/vscode-ibmi-srcpfextension"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "extensionDependencies": [
+    "HalcyonTechLtd.code-for-ibmi"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ibmi-srcpfextension.DownloadSrcPf",
+        "title": "Download source file (TOBI naming convention)",
+        "category": "IBMi"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "ibmi-srcpfextension.DownloadSrcPf",
+          "when": "never"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "ibmi-srcpfextension.DownloadSrcPf",
+          "when": "view == objectBrowser && viewItem =~ /^(SPF).*$/",
+          "group": "3_memberTransfer@1"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "dependencies": {
+    "@halcyontech/vscode-ibmi-types": "^2.18.0",
+    "@types/node": "^22.19.19",
+    "node-ssh": "^13.2.1"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/vscode": "^1.120.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.39.3",
+    "node-ssh": "^13.2.1",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
+    "webpack": "^5.105.3",
+    "webpack-cli": "^6.0.1"
+  }
+}

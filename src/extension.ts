@@ -17,122 +17,259 @@ export function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('ibmi-srcpfextension.DownloadSrcPf', async (node: ObjectItem, nodes?: (ObjectItem)[]) => {
-      const contentApi = getContent();
-      const connection = getConnection();
-      const config = getConfig();
-      let subFolder = '';
-      let locationChoosen = false;
-      let downloadLocationURI: vscode.Uri | undefined;
+	vscode.commands.registerCommand('ibmi-srcpfextension.DownloadSrcPf', async (node: ObjectItem, nodes?: (ObjectItem)[]) => {
+    downloadMembersTobiImpl(`FILE`, node, nodes);
+  });
+//       const contentApi = getContent();
+//       const connection = getConnection();
+//       const config = getConfig();
+//       let subFolder = '';
+//       let locationChoosen = false;
+//       let downloadLocationURI: vscode.Uri | undefined;
 
-      //Gather all the members
-      let members: IBMiMember[] = [];
-      for (const item of (nodes || [node])) {
-        subFolder = item.object.name;
-        if ("object" in item) {
-          members = [];
-          members.push(...await contentApi.getMemberList({ library: item.object.library, sourceFile: item.object.name }));
+//       //Gather all the members
+//       let members: IBMiMember[] = [];
+//       for (const item of (nodes || [node])) {
+//         subFolder = item.object.name;
+//         if ("object" in item) {
+//           members = [];
+//           members.push(...await contentApi.getMemberList({ library: item.object.library, sourceFile: item.object.name }));
 
-          if (!locationChoosen) {
-            locationChoosen = true;
-              downloadLocationURI = (await vscode.window.showOpenDialog({
-                canSelectMany: false,
-                canSelectFiles: false,
-                canSelectFolders: true
-              }))?.[0];
-          }
+//           if (members.length === 0) {
+//             vscode.window.showWarningMessage(vscode.l10n.t(`No members found to download.`));
+//             return;
+//           }
 
-          if (downloadLocationURI) {
-            //Remove double entries and map to { path, copy } object
-            const toBeDownloaded = members
-              .filter((member, index, list) => list.findIndex(m => m.library === member.library && m.file === member.file && m.name === member.name) === index)
-              .sort((m1, m2) => m1.name.localeCompare(m2.name))
-              .map(member => ({ member, path: qualifyPath(member.library, member.file, member.name, member.asp), name: `${member.name}.${member.extension || "MBR"}`, copy: true }));
-            for (const item of toBeDownloaded) {
-              if (item.member.text != null) {
-                item.member.text = item.member.text.replaceAll('.', '')
-                                                   .replaceAll('-', '_')
-                                                   .replaceAll(',', '_')
-                                                   .replaceAll(';', '_')
-                                                   .replaceAll('&', '')
-                                                   .replaceAll('+', '')
-                                                   .replaceAll('?', '')
-                                                   .replaceAll('!', '')
-                                                   .replaceAll('^', ' ')
-                                                   .replaceAll('/', '_')
-                                                   .replaceAll('\\', '_')
-                                                   .replaceAll(`'`,'')
-                                                   .replaceAll(`"`,'')
-                                                   .replaceAll(':', '')
-                                                   .replaceAll('<', '')
-                                                   .replaceAll('>', '')
-                                                   .replaceAll('*', '')
-                                                   .replaceAll('  ', ' ');
-              }
-              if (item.member.extension === null || item.member.extension === undefined || item.member.extension === '') {
-                item.member.extension = 'TXT';
-              }
-            }
-            let downloadLocation = downloadLocationURI.path;
-            downloadLocation = downloadLocation + '/' + subFolder;
+//           if (!locationChoosen) {
+//             locationChoosen = true;
+//               downloadLocationURI = (await vscode.window.showOpenDialog({
+//                 canSelectMany: false,
+//                 canSelectFiles: false,
+//                 canSelectFolders: true
+//               }))?.[0];
+//           }
 
-            vscode.window.showInformationMessage(vscode.l10n.t(`Downloading to {0}`, downloadLocation));
+//           if (downloadLocationURI) {
+//             //Remove double entries and map to { path, copy } object
+//             const toBeDownloaded = members
+//               .filter((member, index, list) => list.findIndex(m => m.library === member.library && m.file === member.file && m.name === member.name) === index)
+//               .sort((m1, m2) => m1.name.localeCompare(m2.name))
+//               .map(member => ({ member, path: qualifyPath(member.library, member.file, member.name, member.asp), name: `${member.name}.${member.extension || "MBR"}`, copy: true }));
+//             for (const item of toBeDownloaded) {
+//               if (item.member.text != null) {
+//                 item.member.text = item.member.text.replaceAll('.', '')
+//                                                    .replaceAll('-', '_')
+//                                                    .replaceAll(',', '_')
+//                                                    .replaceAll(';', '_')
+//                                                    .replaceAll('&', '')
+//                                                    .replaceAll('+', '')
+//                                                    .replaceAll('?', '')
+//                                                    .replaceAll('!', '')
+//                                                    .replaceAll('^', ' ')
+//                                                    .replaceAll('/', '_')
+//                                                    .replaceAll('\\', '_')
+//                                                    .replaceAll(`'`,'')
+//                                                    .replaceAll(`"`,'')
+//                                                    .replaceAll(':', '')
+//                                                    .replaceAll('<', '')
+//                                                    .replaceAll('>', '')
+//                                                    .replaceAll('*', '')
+//                                                    .replaceAll('  ', ' ');
+//               }
+//               if (item.member.extension === null || item.member.extension === undefined || item.member.extension === '') {
+//                 item.member.extension = 'TXT';
+//               }
+//             }
+//             let downloadLocation = downloadLocationURI.path;
+//             downloadLocation = downloadLocation + '/' + subFolder;
 
-            createDirectory(downloadLocation);
+//             vscode.window.showInformationMessage(vscode.l10n.t(`Downloading to {0}`, downloadLocation));
 
-            //await connection.setLastDownloadLocation(downloadLocation);
+//             createDirectory(downloadLocation);
 
-            //Ask what do to with existing files in the target directory
-            let overwriteAll = false;
-            let skipAll = false;
-            const overwriteLabel = vscode.l10n.t(`Overwrite`);
-            const overwriteAllLabel = vscode.l10n.t(`Overwrite all`);
-            const skipAllLabel = vscode.l10n.t(`Skip all`);
-            for (const item of toBeDownloaded) {
-              const target = path.join(fixWindowsPath(downloadLocation), item.name);
-              if (existsSync(target)) {
-                if (skipAll) {
-                  item.copy = false;
-                }
-                else if (!overwriteAll) {
-                  const answer = await vscode.window.showWarningMessage(vscode.l10n.t(`{0} already exists.
-Do you want to replace it?`, item.name), { modal: true }, skipAllLabel, overwriteLabel, overwriteAllLabel);
-                  if (answer) {
-                    overwriteAll ||= (answer === overwriteAllLabel);
-                    skipAll ||= (answer === skipAllLabel);
-                    item.copy = !skipAll && (overwriteAll || answer === overwriteLabel);
-                  }
-                  else {
-                    //Abort!
-                    vscode.window.showInformationMessage(vscode.l10n.t(`Members download cancelled.`));
-                    return;
-                  }
-                }
-              }
-            }
+//             //await connection.setLastDownloadLocation(downloadLocation);
 
-            // Download members
-            await connection.withTempDirectory(async directory => {
-              for (const item of toBeDownloaded) {
-                if (item.copy) {
-                  vscode.window.showInformationMessage(vscode.l10n.t(`Downloading {0}...`, item.name));
-                  let command = `CPYTOSTMF FROMMBR('${qualifyPath(item.member.library, item.member.file, item.member.name)}') TOSTMF('${directory}/${item.member.name.toLocaleLowerCase()}-${item.member.text}.${item.member.extension}') STMFOPT(*REPLACE) STMFCCSID(1208) DBFCCSID(${config.sourceFileCCSID})`;
-                  await connection.runCommand({
-                    command: command
-                  });
-                }
-              } 
-              await connection.getContent().downloadDirectory(downloadLocation, directory);
-              vscode.window.showInformationMessage(vscode.l10n.t(`Members download complete for {0}.`, downloadLocation), vscode.l10n.t(`Open`))
-                .then(open => open ? vscode.commands.executeCommand('revealFileInOS', downloadLocationURI) : undefined);
-            });
-          }
+//             //Ask what do to with existing files in the target directory
+//             let overwriteAll = false;
+//             let skipAll = false;
+//             const overwriteLabel = vscode.l10n.t(`Overwrite`);
+//             const overwriteAllLabel = vscode.l10n.t(`Overwrite all`);
+//             const skipAllLabel = vscode.l10n.t(`Skip all`);
+//             for (const item of toBeDownloaded) {
+//               const target = path.join(fixWindowsPath(downloadLocation), item.name);
+//               if (existsSync(target)) {
+//                 if (skipAll) {
+//                   item.copy = false;
+//                 }
+//                 else if (!overwriteAll) {
+//                   const answer = await vscode.window.showWarningMessage(vscode.l10n.t(`{0} already exists.
+// Do you want to replace it?`, item.name), { modal: true }, skipAllLabel, overwriteLabel, overwriteAllLabel);
+//                   if (answer) {
+//                     overwriteAll ||= (answer === overwriteAllLabel);
+//                     skipAll ||= (answer === skipAllLabel);
+//                     item.copy = !skipAll && (overwriteAll || answer === overwriteLabel);
+//                   }
+//                   else {
+//                     //Abort!
+//                     vscode.window.showInformationMessage(vscode.l10n.t(`Members download cancelled.`));
+//                     return;
+//                   }
+//                 }
+//               }
+//             }
+
+//             // Download members
+//             await connection.withTempDirectory(async directory => {
+//               for (const item of toBeDownloaded) {
+//                 if (item.copy) {
+//                   vscode.window.showInformationMessage(vscode.l10n.t(`Copying {0} to IFS folder {1} ...`, item.name, directory));
+//                   let command = `CPYTOSTMF FROMMBR('${qualifyPath(item.member.library, item.member.file, item.member.name)}') TOSTMF('${directory}/${item.member.name.toLocaleLowerCase()}-${item.member.text}.${item.member.extension}') STMFOPT(*REPLACE) STMFCCSID(1208) DBFCCSID(${config.sourceFileCCSID})`;
+//                   await connection.runCommand({
+//                     command: command
+//                   });
+//                 }
+//               } 
+//               vscode.window.showInformationMessage(vscode.l10n.t(`Downloading IFS folder {0} ...`, directory));
+//               await connection.getContent().downloadDirectory(downloadLocation, directory);
+//               vscode.window.showInformationMessage(vscode.l10n.t(`Members download complete for {0}.`, downloadLocation), vscode.l10n.t(`Open`))
+//                 .then(open => open ? vscode.commands.executeCommand('revealFileInOS', downloadLocationURI) : undefined);
+//             });
+//           }
+//         }
+//       }
+//     })
+
+async function downloadMembersTobiImpl(mode: `LIB` | `FILE`, node: ObjectItem, nodes?: (ObjectItem)[]) {
+  const contentApi = getContent();
+
+  // Gather all members to download
+  const members: IBMiMember[] = [];
+  for (const item of (nodes || [node])) {
+    if (`object` in item) {
+      members.push(...await contentApi.getMemberList({ library: item.object.library, sourceFile: item.object.name }));
+    } 
+  }
+
+  if (members.length === 0) {
+    vscode.window.showWarningMessage(vscode.l10n.t(`No members found to download.`));
+    return;
+  }
+
+  // Prompt for root folder once
+  const rootUriArray = await vscode.window.showOpenDialog({
+    canSelectMany: false,
+    canSelectFiles: false,
+    canSelectFolders: true,
+    openLabel: vscode.l10n.t(`Select base download folder`),
+    //defaultUri: vscode.Uri.file(IBMi.GlobalStorage.getLastDownloadLocation()),
+    title: mode === `LIB`
+      ? vscode.l10n.t(`Download {0} member(s) into Library/File/Member folders`, members.length)
+      : vscode.l10n.t(`Download {0} member(s) into File/Member folders`, members.length)
+  });
+
+  if (!rootUriArray || rootUriArray.length === 0) return;
+  const rootPath = rootUriArray[0].fsPath;
+  //await IBMi.GlobalStorage.setLastDownloadLocation(rootPath);
+
+  // Deduplicate
+  const toDownload = members.filter(
+    (m, i, arr) => arr.findIndex(x => x.library === m.library && x.file === m.file && x.name === m.name) === i
+  );
+
+  // For FILE mode: detect cross-library collisions and fall back to LIB layout for those members
+  const fileKey = (m: IBMiMember) => `${m.file.toUpperCase()}/${m.name.toUpperCase()}.${(m.extension || `MBR`).toUpperCase()}`;
+  let collidingKeys = new Set<string>();
+  if (mode === `FILE`) {
+    const keyCounts = new Map<string, number>();
+    for (const m of toDownload) {
+      const k = fileKey(m);
+      keyCounts.set(k, (keyCounts.get(k) || 0) + 1);
+    }
+    collidingKeys = new Set([...keyCounts.entries()].filter(([, count]) => count > 1).map(([k]) => k));
+    if (collidingKeys.size > 0) {
+      const examples = [...collidingKeys].slice(0, 3).join(`, `);
+      vscode.window.showWarningMessage(
+        vscode.l10n.t(`{0} path collision(s) detected (e.g. {1}). The library folder will be included for those members only.`, collidingKeys.size, examples)
+      );
+    }
+  }
+
+  await vscode.window.withProgress(
+    { title: vscode.l10n.t(`Downloading {0} member(s)`, toDownload.length), location: vscode.ProgressLocation.Notification },
+    async (progress) => {
+      let done = 0;
+      const errors: string[] = [];
+      for (const member of toDownload) {
+        const useLibrary = mode === `LIB` || collidingKeys.has(fileKey(member));
+        const localDir = useLibrary
+          ? path.join(rootPath, member.library.toUpperCase(), member.file.toUpperCase())
+          : path.join(rootPath, member.file.toUpperCase());
+
+        if (member.text != null) {
+                member.text = member.text.replaceAll('.', '')
+                                          .replaceAll('-', '_')
+                                          .replaceAll(',', '_')
+                                          .replaceAll(';', '_')
+                                          .replaceAll('&', '')
+                                          .replaceAll('+', '')
+                                          .replaceAll('?', '')
+                                          .replaceAll('!', '')
+                                          .replaceAll('^', ' ')
+                                          .replaceAll('/', '_')
+                                          .replaceAll('\\', '_')
+                                          .replaceAll(`'`,'')
+                                          .replaceAll(`"`,'')
+                                          .replaceAll(':', '')
+                                          .replaceAll('<', '')
+                                          .replaceAll('>', '')
+                                          .replaceAll('*', '')
+                                          .replaceAll('  ', ' ');
         }
-      }
-    });
 
-	context.subscriptions.push(disposable);
+        const localFile = path.join(localDir, `${member.name.toUpperCase()}-${member.text || ''}.${(member.extension || `MBR`)}`);
+
+        progress.report({
+          message: useLibrary
+            ? `${member.library}/${member.file}/${member.name}.${member.extension || `MBR`}`
+            : `${member.file}/${member.name}.${member.extension || `MBR`}`,
+          increment: (100 / toDownload.length)
+        });
+        try {
+          fs.mkdirSync(localDir, { recursive: true });
+          const content = await contentApi.downloadMemberContent(member.library, member.file, member.name);
+          if (content !== undefined) {
+            fs.writeFileSync(localFile, content, `utf8`);
+          }
+        } catch (e: any) {
+          errors.push(`${member.library}/${member.file}/${member.name}: ${String(e)}`);
+        }
+        done++;
+      }
+
+      if (errors.length > 0) {
+        vscode.window.showWarningMessage(
+          vscode.l10n.t(`{0} of {1} member(s) downloaded. {2} error(s).`, done - errors.length, toDownload.length, errors.length),
+          vscode.l10n.t(`Show Details`)
+        ).then(action => {
+          if (action) {
+            vscode.window.showErrorMessage(errors.join(`\n`));
+          }
+        });
+      } else {
+        vscode.window.showInformationMessage(
+          vscode.l10n.t(`{0} member(s) downloaded to {1}`, done, rootPath),
+          vscode.l10n.t(`Open download folder`)
+        ).then(action => {
+          if (action) {
+            vscode.commands.executeCommand(`revealFileInOS`, vscode.Uri.file(rootPath));
+          }
+        });
+      }
+    }
+  );
 }
+}
+
 
 function getConnection() {
   const connection = getBase()!.instance.getConnection();

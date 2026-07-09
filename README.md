@@ -19,3 +19,6 @@ Initial release
 
 ### 1.0.2
 Better download for the TOBI convention
+
+### 1.0.3
+Name and extension toLowerCase to be consitent with previous release

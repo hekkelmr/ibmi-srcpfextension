@@ -2,7 +2,7 @@
   "name": "ibmi-srcpfextension",
   "displayName": "ibmi-srcpfextension",
   "description": "",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.120.0"
   },
@@ -25,24 +25,25 @@
   "contributes": {
     "commands": [
       {
-        "command": "ibmi-srcpfextension.DownloadSrcPf",
-        "title": "Download source file (TOBI naming convention)",
+        "command": "ibmi-srcpfextension.downloadMemberAsFile",
+        "title": "Download member(s) (TOBI naming convention)",
         "category": "IBMi"
       }
     ],
     "menus": {
-      "commandPalette": [
+      "commandPalette":
+       [
         {
-          "command": "ibmi-srcpfextension.DownloadSrcPf",
+          "command": "ibmi-srcpfextension.downloadMemberAsFile",
           "when": "never"
         }
       ],
       "view/item/context": [
-        {
-          "command": "ibmi-srcpfextension.DownloadSrcPf",
-          "when": "view == objectBrowser && viewItem =~ /^(SPF).*$/",
-          "group": "3_memberTransfer@1"
-        }
+				{
+					"command": "ibmi-srcpfextension.downloadMemberAsFile",
+					"when": "view == objectBrowser && viewItem =~ /^(member|SPF).*$/",
+					"group": "4_memberTransfer@2"
+				}
       ]
     }
   },

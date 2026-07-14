@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import fs, {existsSync} from "node:fs";
 import path from "node:path";
-import {IBMiMember, ObjectItem} from "@halcyontech/vscode-ibmi-types";
+import {IBMiMember, ObjectItem, MemberItem} from "@halcyontech/vscode-ibmi-types";
 import {loadBase, getBase} from './base';
 
 // this method is called when your extension is activated
@@ -17,11 +17,14 @@ export function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	vscode.commands.registerCommand('ibmi-srcpfextension.DownloadSrcPf', async (node: ObjectItem, nodes?: (ObjectItem)[]) => {
-    downloadMembersTobiImpl(`FILE`, node, nodes);
+	vscode.commands.registerCommand('ibmi-srcpfextension.DownloadSrcPf', async (node: ObjectItem | MemberItem, nodes?: (ObjectItem | MemberItem)[]) => {
+    downloadFileTobiImpl(`LIB`, node, nodes);
+  });
+	vscode.commands.registerCommand('ibmi-srcpfextension.downloadMemberAsFile', async (node: ObjectItem | MemberItem, nodes?: (ObjectItem | MemberItem)[]) => {
+    downloadFileTobiImpl(`FILE`, node, nodes);
   });
 
-async function downloadMembersTobiImpl(mode: `LIB` | `FILE`, node: ObjectItem, nodes?: (ObjectItem)[]) {
+async function downloadFileTobiImpl(mode: `LIB` | `FILE`, node: ObjectItem | MemberItem, nodes?: (ObjectItem | MemberItem)[]) {
   const contentApi = getContent();
 
   // Gather all members to download
@@ -29,7 +32,9 @@ async function downloadMembersTobiImpl(mode: `LIB` | `FILE`, node: ObjectItem, n
   for (const item of (nodes || [node])) {
     if (`object` in item) {
       members.push(...await contentApi.getMemberList({ library: item.object.library, sourceFile: item.object.name }));
-    } 
+    }  else if (`member` in item) {
+      members.push(item.member);
+    }
   }
 
   if (members.length === 0) {
@@ -49,7 +54,9 @@ async function downloadMembersTobiImpl(mode: `LIB` | `FILE`, node: ObjectItem, n
       : vscode.l10n.t(`Download {0} member(s) into File/Member folders`, members.length)
   });
 
-  if (!rootUriArray || rootUriArray.length === 0) return;
+  if (!rootUriArray || rootUriArray.length === 0) {
+    return;
+  }
   const rootPath = rootUriArray[0].fsPath;
   //await IBMi.GlobalStorage.setLastDownloadLocation(rootPath);
 

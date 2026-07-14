@@ -22,3 +22,6 @@ Better download for the TOBI convention
 
 ### 1.0.3
 Name and extension toLowerCase to be consitent with previous release
+
+### 1.1.0
+Possibilty to download multiple members at once. The extension will prompt for a destination folder and download all selected members to that folder.
